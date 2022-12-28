@@ -86,8 +86,8 @@ export class AppComponent {
   ngAfterViewInit() {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
-    this.camera.position.y = 15;
-    this.camera.position.z = 25;
+    this.camera.position.y = 25;
+    this.camera.position.z = 20;
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(this.container.nativeElement.offsetWidth, this.container.nativeElement.offsetHeight);
     this.container.nativeElement.appendChild(this.renderer.domElement);
@@ -104,9 +104,9 @@ export class AppComponent {
     this.container.nativeElement.addEventListener('mousemove', this.mouseMove.bind(this));
     this.container.nativeElement.addEventListener('mouseup', this.mouseUp.bind(this));
 
-    this.container.nativeElement.addEventListener('touchstart', this.mouseDown.bind(this, true));
-    this.container.nativeElement.addEventListener('touchmove', this.mouseMove.bind(this, true));
-    this.container.nativeElement.addEventListener('touchend', this.mouseUp.bind(this, true));
+    this.container.nativeElement.addEventListener('touchstart',(event:any)=> {this.mouseDown(event, true)});
+    this.container.nativeElement.addEventListener('touchmove', (event:any)=> {this.mouseMove(event, true)});
+    this.container.nativeElement.addEventListener('touchend', (event:any)=> {this.mouseUp(event, true)});
 
     this.animateFrames();
   }
@@ -1327,7 +1327,7 @@ export class AppComponent {
 
 
   mouseDown(e: any, useTouchObject: any) {
-    e.preventDefault();
+    if(!useTouchObject) e.preventDefault();
     if (this.stopEvent) {
       return;
     }
@@ -1472,8 +1472,9 @@ export class AppComponent {
 
 
   offset(e: any, useTouchObject: any = false) {
-    var target = e.target || e.srcElement,
-      rect = target.getBoundingClientRect();
+    var target = e.target || e.srcElement;
+
+    var rect = target.getBoundingClientRect();
     var offsetX, offsetY;
     if (useTouchObject && e.touches.length > 0) {
       offsetX = e.touches[0].clientX - rect.left;
@@ -1490,7 +1491,7 @@ export class AppComponent {
 
 
   mouseMove(e: any, useTouchObject: any) {
-    e.preventDefault();
+    if(!useTouchObject) e.preventDefault();
     if (this.stopEvent) {
       return;
     }
@@ -1528,8 +1529,8 @@ export class AppComponent {
     }
   }
 
-  mouseUp(e: any) {
-    e.preventDefault();
+  mouseUp(e: any, useTouchObject : any) {
+    if(!useTouchObject) e.preventDefault();
     if (this.stopEvent) {
       return;
     }
