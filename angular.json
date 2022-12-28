@@ -99,7 +99,9 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": [],
+            "scripts": [
+              "./../assets/js/chess/chess.js"
+            ],
             "webWorkerTsConfig": "tsconfig.worker.json"
           }
         }
