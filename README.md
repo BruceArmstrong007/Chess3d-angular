@@ -29,4 +29,4 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 # Image
 
-![image](https://user-images.githubusercontent.com/48177059/209846036-8b78bf66-587b-4357-b6fc-0f72d63b314e.png)
+<img width="956" alt="chess" src="https://user-images.githubusercontent.com/48177059/209847599-342a39bb-a238-48ad-a1e7-281941d6c19b.png">
