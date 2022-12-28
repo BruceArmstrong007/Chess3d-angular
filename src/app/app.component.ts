@@ -49,6 +49,12 @@ export class AppComponent {
   numericLabelText = "12345678".split('');
   ANIMATION_HAPPENING = false;
   startTween : any;
+  DRAG_INFO : any = null;
+  MOUSEOVER_SQUARE = 'offboard';
+  SOURCE_SQUARE_HIGHLIGHT_MESH : any = null;
+  DESTINATION_SQUARE_HIGHLIGHT_MESH : any = null;
+  USER_HIGHLIGHT_MESHES : any = [];
+  CURRENT_ORIENTATION = 'white';
 
   constructor(){
     this.WHITE_MATERIAL = new THREE.MeshPhongMaterial({color: new THREE.Color(this.whitePieceColor)});
@@ -81,8 +87,29 @@ export class AppComponent {
     this.controls.maxDistance = 50;
     this.controls.enableZoom = true;
     this.buildBoard();
-    this.loadPieces();
     this.setWidget();
+    this.loadPieces();
+    // this.renderer.domElement.addEventListener( 'mousedown', (e:any)=> {
+    //   this.mouseDown(e, false);
+    // }, true );
+    // this.renderer.domElement.addEventListener( 'mousemove', (e:any) =>{
+    //   this.mouseMove(e, false);
+    // }, true);
+    // this.renderer.domElement.addEventListener( 'mouseup', (e:any) =>{
+    //   this.mouseUp(e);
+    // }, true);
+   this.container.nativeElement.addEventListener('mousedown', this.mouseDown.bind(this));
+   this.container.nativeElement.addEventListener('mousemove', this.mouseMove.bind(this));
+   this.container.nativeElement.addEventListener('mouseup', this.mouseUp.bind(this));
+    // if ('ontouchstart' in document.documentElement) {
+    //     this.renderer.domElement.addEventListener('touchstart', (e:any)=> {
+    //       this.mouseDown(e, true);
+    //     }, true);
+    //     this.renderer.domElement.addEventListener('touchmove', (e:any) =>{
+    //       this.mouseMove(e, true);
+    //     }, true);
+    //     this.renderer.domElement.addEventListener('touchend', this.mouseUp, true);
+    // }
     this.animateFrames();
   }
 
@@ -247,16 +274,16 @@ addLabelsToScene() {
 }
 
 drawSparePieces() {
-//   for (let sq in this.SPARE_POSITION) {
-//     if (!this.SPARE_POSITION.hasOwnProperty(sq)) {
-//         continue;
-//     }
-//     var piece = this.SPARE_POSITION[sq];
-//     var mesh = this.buildPieceMesh(sq, piece);
-//     this.PIECE_MESH_IDS[sq] = mesh.id;
-//     this.scene.add(mesh);
-// }
-//  this.drawPositionInstant();
+  for (let sq in this.SPARE_POSITION) {
+    if (!this.SPARE_POSITION.hasOwnProperty(sq)) {
+        continue;
+    }
+    var piece = this.SPARE_POSITION[sq];
+    var mesh = this.buildPieceMesh(sq, piece);
+    this.PIECE_MESH_IDS[sq] = mesh.id;
+    this.scene.add(mesh);
+}
+ this.drawPositionInstant();
 }
 
 
@@ -696,6 +723,78 @@ calculateAnimations(oldPosition:any, newPosition:any) {
       }
   }
 
+  pieceOnSquare(sq:any) {
+    var position;
+    if (this.validSpareSquare(sq)) {
+        position = this.SPARE_POSITION;
+    } else if (this.validOrdinarySquare(sq)) {
+        position = this.CURRENT_POSITION;
+    }
+    if (!position) {
+        return;
+    }
+    return position[sq];
+}
+
+projectOntoPlane(mouseX:any, mouseY:any, heightAboveBoard:any) {
+  var planeY = new THREE.Plane(new THREE.Vector3(0, 1, 0), -heightAboveBoard);
+  var raycaster:any = this.pickingRayCaster(mouseX, mouseY);
+  var intersects = new THREE.Vector3();
+  var pos = raycaster.ray.intersectPlane(planeY,intersects);
+  if (pos) {
+      return new THREE.Vector3(pos.x, heightAboveBoard, pos.z);
+  }
+  return null;
+}
+
+
+isXZOnSquare(x_coord:any, z_coord:any) {
+  for (var sq in this.SQUARE_MESH_IDS) {
+      if (this.SQUARE_MESH_IDS.hasOwnProperty(sq)) {
+          var squareMesh = this.scene.getObjectById(this.SQUARE_MESH_IDS[sq]);
+          if (x_coord >= squareMesh.position.x - this.SQUARE_SIZE / 2
+              && x_coord < squareMesh.position.x + this.SQUARE_SIZE / 2
+              && z_coord >= squareMesh.position.z - this.SQUARE_SIZE / 2
+              && z_coord < squareMesh.position.z + this.SQUARE_SIZE / 2) {
+              return sq;
+          }
+      }
+  }
+
+        // Return "spare square" code, e.g. sw1, sb2, sw3 etc.
+        var colorcode;
+        if (z_coord >= 4 * this.SQUARE_SIZE && z_coord <= 6 * this.SQUARE_SIZE) {
+            colorcode = 'w';
+        } else if (z_coord <= -4 * this.SQUARE_SIZE && z_coord >= -6 * this.SQUARE_SIZE) {
+            colorcode = 'b';
+        } else {
+            return 'offboard';
+        }
+        var u = Math.round(1 + ((10 - 3 * x_coord / this.SQUARE_SIZE) / 4));
+        if (u >= 1 && u <= 6) {
+            sq = 's' + colorcode + u;
+            return sq;
+        }
+
+  // if (this.cfg.sparePieces) {
+  //     // Return "spare square" code, e.g. sw1, sb2, sw3 etc.
+  //     var colorcode;
+  //     if (z_coord >= 4 * this.SQUARE_SIZE && z_coord <= 6 * this.SQUARE_SIZE) {
+  //         colorcode = 'w';
+  //     } else if (z_coord <= -4 * this.SQUARE_SIZE && z_coord >= -6 * this.SQUARE_SIZE) {
+  //         colorcode = 'b';
+  //     } else {
+  //         return 'offboard';
+  //     }
+  //     var u = Math.round(1 + ((10 - 3 * x_coord / this.SQUARE_SIZE) / 4));
+  //     if (u >= 1 && u <= 6) {
+  //         sq = 's' + colorcode + u;
+  //         return sq;
+  //     }
+  // }
+  return 'offboard';
+}
+
 
   animateSquareToSquare(src: any, dest: any, completeFn: any) {
     var destSquareMesh : any, pieceMesh : any;
@@ -777,16 +876,16 @@ doAnimations(a:any, oldPos:any, newPos:any) {
   }
   for (j = 0; j < a.length; j++) {
       if (a[j].type === 'add') {
-                      this.animatePieceFadeIn(a[j].square, a[j].piece, onFinish);
+                  //  /   this.animatePieceFadeIn(a[j].square, a[j].piece, onFinish);
 
-      //   for (var sp in this.SPARE_POSITION) {
-      //     if (!this.SPARE_POSITION.hasOwnProperty(sp)) {
-      //         continue;
-      //     }
-      //     if (this.SPARE_POSITION[sp] === a[j].piece) {
-      //       this.animateSquareToSquare(sp, a[j].square, onFinish);
-      //     }
-      // }
+        for (var sp in this.SPARE_POSITION) {
+          if (!this.SPARE_POSITION.hasOwnProperty(sp)) {
+              continue;
+          }
+          if (this.SPARE_POSITION[sp] === a[j].piece) {
+            this.animateSquareToSquare(sp, a[j].square, onFinish);
+          }
+      }
           // if (this.cfg.sparePieces === true) {
           //     for (var sp in this.SPARE_POSITION) {
           //         if (!this.SPARE_POSITION.hasOwnProperty(sp)) {
@@ -889,6 +988,15 @@ setWidget(){
   this.widget.clear = (useAnimation:any)=> {
     this.widget.position({}, useAnimation);
   };
+
+    // clear all highlights set from client code
+  this.widget.removeGreySquares = function() {
+      while (this.USER_HIGHLIGHT_MESHES?.length > 0) {
+        this.scene.remove(this.USER_HIGHLIGHT_MESHES?.pop());
+      }
+      this.USER_HIGHLIGHT_MESHES = [];
+  };
+
 }
 
 
@@ -911,5 +1019,427 @@ animateFrames() {
     this.renderer.setSize(this.container.nativeElement.offsetWidth, this.container.nativeElement.offsetHeight);
     this.renderer.render(this.scene, this.camera);
   }
+
+// ---------------------------------------------------------------------//
+      //                            BROWSER EVENTS                            //
+      // ---------------------------------------------------------------------//
+
+
+
+      pickingRayCaster(mouseX:any, mouseY:any) {
+        var vector = new THREE.Vector3((mouseX / this.renderer.domElement.width) * 2 - 1,
+            1 - (mouseY / this.renderer.domElement.height) * 2,
+            -0.5);
+        vector.unproject(this.camera);
+        return new THREE.Raycaster(this.camera.position,
+            vector.sub(this.camera.position).normalize());
+    }
+
+      // Checks ray collisions with board or pieces
+        raycast(mouseX:any, mouseY:any) {
+
+          var raycaster : any = this.pickingRayCaster(mouseX, mouseY);
+
+          var possibleHits:any = {};
+          var meshes = [];
+          var count = 0;
+          var intersection;
+          var sq, piece, mesh;
+          for (sq in this.PIECE_MESH_IDS) {
+              if (!this.PIECE_MESH_IDS.hasOwnProperty(sq)) {
+                  continue;
+              }
+              piece = this.PIECE_MESH_IDS[sq];
+              if (!piece) {
+                  continue;
+              }
+              var pieceMesh = this.scene.getObjectById(this.PIECE_MESH_IDS[sq]);
+              piece = this.pieceOnSquare(sq);
+              var pieceBoundingBox = this.GEOMETRIES[piece.charAt(1)].boundingBox.clone();
+              pieceBoundingBox.min.x += pieceMesh.position.x;
+              pieceBoundingBox.max.x += pieceMesh.position.x;
+              pieceBoundingBox.min.z += pieceMesh.position.z;
+              pieceBoundingBox.max.z += pieceMesh.position.z;
+              console.log(pieceBoundingBox)
+              intersection = raycaster.intersectObject(pieceMesh);
+
+              if (intersection) {
+                possibleHits[sq] = intersection;
+                  meshes.push(pieceMesh);
+                  count++;
+              }
+          }
+          if (meshes.length > 0) {
+              if (meshes.length === 1) {
+                  // we hit one piece's bounding box; just take a shortcut and assume an exact hit:
+                  sq = Object.keys(possibleHits)[0];
+                  intersection = possibleHits[sq];
+                  mesh = meshes[0];
+                  return {
+                      source : sq,
+                      location : sq,
+                      piece : this.pieceOnSquare(sq),
+                      mesh : mesh,
+                      intersection_point : intersection,
+                      off_center_x : intersection.x - mesh.position.x,
+                      off_center_z : intersection.z - mesh.position.z
+                  };
+              }
+              // Check piece meshes to see which mesh is closest to camera
+              // The intersectObjects() call is more expensive than the call to intersectBox()
+              var intersects = raycaster.intersectObjects(meshes);
+              if (intersects.length > 0) {
+                  for (sq in possibleHits) {
+                      if (possibleHits.hasOwnProperty(sq)) {
+                          mesh = this.scene.getObjectById(this.PIECE_MESH_IDS[sq]);
+                          if (mesh === intersects[0].object) {
+                              intersection = intersects[0].point;
+                              return {
+                                  source : sq,
+                                  location : sq,
+                                  piece : this.pieceOnSquare(sq),
+                                  mesh : mesh,
+                                  intersection_point : intersection,
+                                  off_center_x : intersection.x - mesh.position.x,
+                                  off_center_z : intersection.z - mesh.position.z
+                              };
+                          }
+                      }
+                  }
+              }
+          }
+
+          // We didn't hit an actual piece mesh. Did we hit anything, like a square, empty or not?
+          var pos = this.projectOntoPlane(mouseX, mouseY, 0);
+          if (!pos) {
+              return {
+                  source : 'offboard',
+                  location: 'offboard'
+              }
+          }
+          sq = this.isXZOnSquare(pos.x, pos.z);
+          piece = this.pieceOnSquare(sq);
+          mesh = this.scene.getObjectById(this.PIECE_MESH_IDS[sq]);
+          return {
+              source : sq,
+              location : sq,
+              piece : piece,
+              mesh : mesh,
+              intersection_point : new THREE.Vector3(pos.x, 0, pos.z),
+              off_center_x : (mesh ? pos.x - mesh.position.x : undefined),
+              off_center_z : (mesh ? pos.z - mesh.position.z : undefined)
+          }
+      }
+
+      addSquareHighlight(sq:any, color:any = null) {
+        if (!color) {
+            color = 0xFFFF00;
+        }
+        var squareMesh = this.scene.getObjectById(this.SQUARE_MESH_IDS[sq]);
+        var highlightMesh = null;
+        if (squareMesh) {
+            var highlight_geometry = new THREE.TorusGeometry(1.2 * this.SQUARE_SIZE / 2, 0.1, 4, 4);
+            highlightMesh = new THREE.Mesh(highlight_geometry, new THREE.MeshBasicMaterial({color: new THREE.Color(color)}));
+            highlightMesh.position.x = squareMesh.position.x;
+            highlightMesh.position.y = 0;
+            highlightMesh.position.z = squareMesh.position.z;
+            highlightMesh.rotation.z = Math.PI / 4;
+            highlightMesh.rotation.x = Math.PI / 2;
+            this.scene.add(highlightMesh);
+        }
+        return highlightMesh;
+    }
+
+      removeSourceHighlight() {
+        if (this.SOURCE_SQUARE_HIGHLIGHT_MESH) {
+          this.scene.remove(this.SOURCE_SQUARE_HIGHLIGHT_MESH);
+          this.SOURCE_SQUARE_HIGHLIGHT_MESH = null;
+        }
+    }
+
+
+      highlightSourceSquare(sq:any) {
+        this.removeSourceHighlight();
+        this.SOURCE_SQUARE_HIGHLIGHT_MESH = this.addSquareHighlight(sq);
+    }
+
+
+    beginDraggingPiece() {
+      if (this.controls) {
+        this.controls.enabled = false;
+      }
+      // if (this.cfg.hasOwnProperty('onDragStart') && typeof this.cfg.onDragStart === 'function' &&
+      //     this.cfg.onDragStart(this.DRAG_INFO.source,
+      //       this.DRAG_INFO.piece,
+      //       this.deepCopy(this.CURRENT_POSITION),
+      //       this.CURRENT_ORIENTATION) === false) {
+      //         this.DRAG_INFO = null;
+      //     return;
+      // }
+      if (this.validSpareSquare(this.DRAG_INFO.source)) {
+          // dragging a spare piece
+          this.DRAG_INFO.mesh = this.DRAG_INFO.mesh.clone();
+          this.DRAG_INFO.mesh.position.y = 0; // lift spare piece onto the board
+          this.scene.add(this.DRAG_INFO.mesh);
+          this.RENDER_FLAG = true;
+      } else if (this.validOrdinarySquare(this.DRAG_INFO.source)) {
+          // dragging an ordinary piece
+          this.highlightSourceSquare(this.DRAG_INFO.source);
+      }
+  }
+  updateLocation(raycast:any, mouse_x:any, mouse_y:any) {
+    var pos = this.projectOntoPlane(mouse_x, mouse_y, raycast.intersection_point.y);
+    if (!pos) {
+        return; // ray parallel to xz plane
+    }
+    pos.x -= raycast.off_center_x;
+    pos.z -= raycast.off_center_z;
+    raycast.location = this.isXZOnSquare(pos.x, pos.z);
+    if (raycast.mesh.position.x !== pos.x || raycast.mesh.position.z !== pos.z) {
+        raycast.mesh.position.x = pos.x;
+        raycast.mesh.position.z = pos.z;
+    }
+}
+
+removeDestinationHighlight() {
+  if (this.DESTINATION_SQUARE_HIGHLIGHT_MESH) {
+    this.scene.remove(this.DESTINATION_SQUARE_HIGHLIGHT_MESH);
+    this. DESTINATION_SQUARE_HIGHLIGHT_MESH = null;
+  }
+}
+removeSquareHighlights() {
+  this.removeSourceHighlight();
+  this.removeDestinationHighlight();
+  this.widget.removeGreySquares();
+}
+
+highlightDestinationSquare(sq:any) {
+  this.removeDestinationHighlight();
+  this.DESTINATION_SQUARE_HIGHLIGHT_MESH = this.addSquareHighlight(sq);
+}
+
+  updateDraggedPiece(mouse_x:any, mouse_y:any) {
+    var priorLocation = this.DRAG_INFO.location;
+    this.updateLocation(this.DRAG_INFO, mouse_x, mouse_y);
+    //DRAG_INFO.updateLocation(mouse_x, mouse_y);
+    if (priorLocation !== this.DRAG_INFO.location) {
+      this.removeDestinationHighlight();
+        if (this.validOrdinarySquare(this.DRAG_INFO.location) && this.DRAG_INFO.location !== this.DRAG_INFO.source) {
+          this.highlightDestinationSquare(this.DRAG_INFO.location);
+        }
+    }
+    // if (this.cfg.hasOwnProperty('onDragMove') && typeof this.cfg.onDragMove === 'function') {
+    //     this.cfg.onDragMove(this.DRAG_INFO.location, priorLocation, this.DRAG_INFO.source, this.DRAG_INFO.piece,
+    //       this.deepCopy(this.CURRENT_POSITION), this.CURRENT_ORIENTATION);
+    // }
+}
+
+
+     mouseDown(e : any, useTouchObject : any) {
+        e.preventDefault();
+        if (this.DRAG_INFO) {
+            return;
+        }
+        // if (!cfg.draggable) {
+        //     return;
+        // }
+        var coords = this.offset(e, useTouchObject);
+        var dragged = this.raycast(coords.x, coords.y);
+        if (dragged && dragged.piece !== undefined) {
+            this.DRAG_INFO = dragged;
+            this.MOUSEOVER_SQUARE = 'offboard';
+            this.beginDraggingPiece();
+        } else {
+            if (this.controls) {
+              this.controls.enabled = true;
+            }
+        }
+    }
+
+
+
+    snapbackDraggedPiece() {
+      this.removeSquareHighlights();
+      if (this.validSpareSquare(this.DRAG_INFO.source)) {
+        this.scene.remove(this.DRAG_INFO.mesh);
+        this.DRAG_INFO = null;
+      } else {
+          var tx_start = this.DRAG_INFO.mesh.position.x;
+          var tz_start = this.DRAG_INFO.mesh.position.z;
+          var squareMesh = this.scene.getObjectById(this.SQUARE_MESH_IDS[this.DRAG_INFO.source]);
+          var tx_target = squareMesh.position.x;
+          var tz_target = squareMesh.position.z;
+          var end = ()=> {
+            this.DRAG_INFO.mesh.position.x = tx_target;
+            this.DRAG_INFO.mesh.position.z = tz_target;
+              var piece = this.DRAG_INFO.piece, source = this.DRAG_INFO.source;
+              this.DRAG_INFO = null;
+              // if (this.cfg.hasOwnProperty('onSnapbackEnd') && typeof this.cfg.onSnapbackEnd === 'function') {
+              //     this.cfg.onSnapbackEnd(piece, source, this.deepCopy(this.CURRENT_POSITION), this.CURRENT_ORIENTATION);
+              // }
+              this.ANIMATION_HAPPENING = false;
+              this.RENDER_FLAG = true;
+          };
+          this.startTween((t: any) =>{
+            this.DRAG_INFO.mesh.position.x = tx_start + t * (tx_target - tx_start);
+            this.DRAG_INFO.mesh.position.z = tz_start + t * (tz_target - tz_start);
+          }, end, 100);
+      }
+  }
+
+  trashDraggedPiece() {
+    this.removeSquareHighlights();
+    this.scene.remove(this.DRAG_INFO.mesh);
+    if (this.validOrdinarySquare(this.DRAG_INFO.source)) {
+        var position = this.deepCopy(this.CURRENT_POSITION);
+        delete position[this.DRAG_INFO.source];
+        this.setCurrentPosition(position);
+        delete this.PIECE_MESH_IDS[this.DRAG_INFO.source];
+    }
+    this.DRAG_INFO = null;
+}
+
+
+dropDraggedPieceOnSquare() {
+  this.removeSquareHighlights();
+  var newPosition = this.deepCopy(this.CURRENT_POSITION);
+  var squareMesh = this.scene.getObjectById(this.SQUARE_MESH_IDS[this.DRAG_INFO.location]);
+  this.DRAG_INFO.mesh.position.x = squareMesh.position.x;
+  this.DRAG_INFO.mesh.position.z = squareMesh.position.z;
+  if (this.validOrdinarySquare(this.DRAG_INFO.source)) {
+      delete newPosition[this.DRAG_INFO.source];
+      delete this.PIECE_MESH_IDS[this.DRAG_INFO.source];
+  }
+  if (newPosition[this.DRAG_INFO.location]) {
+    this.scene.remove(this.scene.getObjectById(this.PIECE_MESH_IDS[this.DRAG_INFO.location]));
+  }
+  newPosition[this.DRAG_INFO.location] = this.DRAG_INFO.piece;
+  this.PIECE_MESH_IDS[this.DRAG_INFO.location] = this.DRAG_INFO.mesh.id;
+  var src = this.DRAG_INFO.source, tgt = this.DRAG_INFO.location, piece = this.DRAG_INFO.piece;
+  this.DRAG_INFO = null;
+  this.setCurrentPosition(newPosition);
+  // if (this.cfg.hasOwnProperty('onSnapEnd') && typeof this.cfg.onSnapEnd === 'function') {
+  //     this.cfg.onSnapEnd(src, tgt, piece);
+  // }
+}
+
+    stopDraggedPiece() {
+      var action = 'drop';
+      if (this.DRAG_INFO.location === 'offboard'
+          || this.validSpareSquare(this.DRAG_INFO.location)) {
+          // if (this.cfg.dropOffBoard === 'snapback') {
+          //     action = 'snapback';
+          // }
+          // if (this.cfg.dropOffBoard === 'trash') {
+          //     action = 'trash';
+          // }
+      }
+
+      // Call onDrop on event handlers, possibly changing action
+    //  if (this.cfg.hasOwnProperty('onDrop') && typeof this.cfg.onDrop === 'function') {
+          var newPosition = this.deepCopy(this.CURRENT_POSITION);
+
+          // source piece is a spare piece and destination is on the board
+          if (this.validSpareSquare(this.DRAG_INFO.source) && this.validOrdinarySquare(this.DRAG_INFO.location)) {
+              newPosition[this.DRAG_INFO.location] = this.DRAG_INFO.piece;
+          }
+          // source piece was on the board and destination is off the board
+          if (this.validOrdinarySquare(this.DRAG_INFO.source) && !this.validOrdinarySquare(this.DRAG_INFO.location)) {
+              delete newPosition[this.DRAG_INFO.source];
+          }
+          // Both source piece and destination are on the board
+          if (this.validOrdinarySquare(this.DRAG_INFO.source) && this.validOrdinarySquare(this.DRAG_INFO.location)) {
+              delete newPosition[this.DRAG_INFO.source];
+              newPosition[this.DRAG_INFO.location] = this.DRAG_INFO.piece;
+          }
+          var oldPosition = this.deepCopy(this.CURRENT_POSITION);
+          // var result = this.cfg.onDrop(this.DRAG_INFO.source, this.DRAG_INFO.location, this.DRAG_INFO.piece, newPosition, oldPosition, this.CURRENT_ORIENTATION);
+          // if (result === 'snapback' || result === 'trash') {
+          //     action = result;
+          // }
+          action == 'snapback';
+    //  }
+
+      if (action === 'snapback') {
+        this.snapbackDraggedPiece();
+      }
+      else if (action === 'trash') {
+        this.trashDraggedPiece();
+      }
+      else if (action === 'drop') {
+        this.dropDraggedPieceOnSquare();
+      }
+      if (this.controls) {
+        this.controls.enabled = true;
+      }
+      this.RENDER_FLAG = true;
+      this.removeSquareHighlights();
+  }
+
+
+offset(e : any, useTouchObject : any = false) {
+  var target = e.target || e.srcElement,
+      rect = target.getBoundingClientRect();
+  var offsetX, offsetY;
+  if (useTouchObject && e.touches.length > 0) {
+      offsetX = e.touches[0].clientX - rect.left;
+      offsetY = e.touches[0].clientY - rect.top;
+  } else {
+      offsetX = e.clientX - rect.left,
+      offsetY = e.clientY - rect.top;
+  }
+  return {
+      x: offsetX,
+      y: offsetY
+  };
+}
+
+
+     mouseMove(e : any, useTouchObject : any) {
+        e.preventDefault();
+        var coords = this.offset(e, useTouchObject);
+        if (this.DRAG_INFO) {
+            this.updateDraggedPiece(coords.x, coords.y);
+        }
+        // else {
+        //     // Support onMouseOutSquare() and mouseOverSquare() callbacks if they exist
+        //     var callOut, callOver;
+        //     if (cfg.hasOwnProperty('onMouseoutSquare') && typeof (cfg.onMouseoutSquare) === 'function') {
+        //         callOut = cfg.onMouseoutSquare;
+        //     }
+        //     if (cfg.hasOwnProperty('onMouseoverSquare') && typeof (cfg.onMouseoverSquare) === 'function') {
+        //         callOver = cfg.onMouseoverSquare;
+        //     }
+        //     if (callOut || callOver) {
+        //         var currentSquare = this.raycast(coords.x, coords.y).source;
+        //         var currentPosition = this.deepCopy(this.CURRENT_POSITION);
+        //         if (currentSquare !== this.MOUSEOVER_SQUARE) {
+        //             var piece;
+        //             if (callOut && this.validOrdinarySquare(this.MOUSEOVER_SQUARE)) {
+        //                 piece = false;
+        //                 if (currentPosition.hasOwnProperty(this.MOUSEOVER_SQUARE)) {
+        //                     piece = currentPosition[this.MOUSEOVER_SQUARE];
+        //                 }
+        //                 this.callOut(this.MOUSEOVER_SQUARE, piece, currentPosition, this.CURRENT_ORIENTATION);
+        //             }
+        //             if (callOver && this.validOrdinarySquare(currentSquare)) {
+        //                 piece = false;
+        //                 if (currentPosition.hasOwnProperty(currentSquare)) {
+        //                     piece = currentPosition[currentSquare];
+        //                 }
+        //                 callOver(currentSquare, piece, currentPosition, this.CURRENT_ORIENTATION);
+        //             }
+        //             this.MOUSEOVER_SQUARE = currentSquare;
+        //         }
+        //     }
+        // }
+    }
+
+     mouseUp(e:any) {
+        e.preventDefault();
+        if (this.DRAG_INFO) {
+            this.stopDraggedPiece();
+        }
+    }
 
 }
