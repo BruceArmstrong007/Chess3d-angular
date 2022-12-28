@@ -30,8 +30,7 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": [],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -101,8 +100,7 @@
             ],
             "scripts": [
               "./../assets/js/chess/chess.js"
-            ],
-            "webWorkerTsConfig": "tsconfig.worker.json"
+            ]
           }
         }
       }

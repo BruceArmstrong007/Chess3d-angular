@@ -155,12 +155,10 @@ export class AppComponent {
         this.drawSparePieces();
         this.widget.start(true)
       },
-      // called while loading is progressing
-      function (xhr) {
+       (xhr) =>{
         console.log((xhr.loaded / xhr.total * 100) + '% loaded');
       },
-      // called when loading has errors
-      function (error) {
+       (error) =>{
         console.log('An error happened');
       }
     );
@@ -170,7 +168,6 @@ export class AppComponent {
 
   buildBoard() {
     var i;
-
     let darkSquareColor = 0xb68863;
     let lightSquareColor = 0xf0d9b5;
     let lightSquareMaterial = new THREE.MeshPhongMaterial({ color: new THREE.Color(lightSquareColor) });
@@ -218,12 +215,8 @@ export class AppComponent {
 
 
   addLabelsToScene() {
-
     var loader = new FontLoader();
-    let url = './../assets/fonts/helvetiker_regular.typeface.json';
-
-    loader.load(url, (font: any) => {
-      // Add the file / rank labels
+    loader.load('./../assets/fonts/helvetiker_regular.typeface.json', (font: any) => {
       var opts = {
         font: font,
         size: 1,
@@ -236,17 +229,14 @@ export class AppComponent {
         material: 0,
         extrudeMaterial: 1
       };
-
       this.LABELS = [];
       var textGeom;
       var label;
       let textMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(this.textColor) });
-
       for (var i = 0; i < 8; i++) {
         textGeom = new TextGeometry(this.alphaLabelText[i], opts);
         textGeom.computeBoundingBox();
         textGeom.computeVertexNormals();
-
         label = new THREE.Mesh(textGeom, textMaterial);
         label.position.x = 3 * i - 9 - opts.size;
         label.position.y = -0.9;
@@ -341,16 +331,13 @@ export class AppComponent {
     }
   }
   updateStatus() {
-
     var status = '';
-
     var moveColor = 'White';
     this.stopEvent = false;
     if (this.game.turn() === 'b') {
       moveColor = 'Black';
       this.stopEvent = true;
     }
-
     if (this.game.game_over()) {
 
       if (this.game.in_checkmate()) {
@@ -367,7 +354,6 @@ export class AppComponent {
       alert(status);
       this.engineRunning = false;
     }
-
     // game still on
     else {
       if (this.player === 'w') {
@@ -382,8 +368,6 @@ export class AppComponent {
         status += ' ' + moveColor + ' is in check.';
       }
     }
-
-    //this.fenEl.html(this.game.fen().replace(/ /g, '&nbsp;'));
     var currentPGN = this.game.pgn({ max_width: 10, newline_char: "<br>" });
     var matches = this.entirePGN.lastIndexOf(currentPGN, 0) === 0;
     if (matches) {
@@ -391,13 +375,10 @@ export class AppComponent {
     } else {
       this.entirePGN = currentPGN;
     }
-    // pgnEl.html(currentPGN);
-    // console.log('currentPGN', currentPGN)
     if (this.engineRunning) {
       status += ' Thinking...';
     }
     console.log('Status', status)
-    // statusEl.html(status);
   };
 
 
@@ -448,17 +429,14 @@ export class AppComponent {
     var coords = this.squareCoordinates(square);
     var color = piece.charAt(0);
     var species = piece.charAt(1);
-
     var material;
     if (color === 'w') {
       material = this.WHITE_MATERIAL.clone();
     } else if (color === 'b') {
       material = this.BLACK_MATERIAL.clone();
     }
-
     var geometry: any, mesh: any;
     geometry = this.GEOMETRIES[species];
-
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.x = coords.x;
     mesh.position.z = coords.z;
@@ -481,7 +459,6 @@ export class AppComponent {
       tx = this.SQUARE_SIZE * (4 * u - 10) / 3;
       if (square.charAt(1) == 'w') {
         tz = 5 * this.SQUARE_SIZE;
-
       } else if (square.charAt(1) == 'b') {
         tz = -5 * this.SQUARE_SIZE;
       }
@@ -499,14 +476,11 @@ export class AppComponent {
     s1 = s1.split('');
     var s1x = this.alphaLabelText.indexOf(s1[0]) + 1;
     var s1y = parseInt(s1[1], 10);
-
     s2 = s2.split('');
     var s2x = this.alphaLabelText.indexOf(s2[0]) + 1;
     var s2y = parseInt(s2[1], 10);
-
     var xDelta = Math.abs(s1x - s2x);
     var yDelta = Math.abs(s1y - s2y);
-
     if (xDelta >= yDelta) return xDelta;
     return yDelta;
   }
@@ -519,10 +493,8 @@ export class AppComponent {
     for (i = 0; i < 8; i++) {
       for (j = 0; j < 8; j++) {
         var s = this.alphaLabelText[i] + (j + 1);
-
         // skip the square we're starting from
         if (square === s) continue;
-
         squares.push({
           square: s,
           distance: this.squareDistance(square, s)
@@ -556,7 +528,6 @@ export class AppComponent {
     return false;
   }
 
-
   validOrdinarySquare(square: any) {
     if (typeof square !== 'string') return false;
     return (square.search(/^[a-h][1-8]$/) !== -1);
@@ -570,6 +541,7 @@ export class AppComponent {
   validSquare(square: any) {
     return this.validOrdinarySquare(square) || this.validSpareSquare(square);
   }
+
   validPieceCode(code: any) {
     if (typeof code !== 'string') {
       return false;
@@ -590,15 +562,14 @@ export class AppComponent {
 
     return true;
   }
+
   // convert bP, wK, etc code to FEN structure
   pieceCodeToFen(piece: any) {
     var tmp = piece.split('');
-
     // white piece
     if (tmp[0] === 'w') {
       return tmp[1].toUpperCase();
     }
-
     // black piece
     return tmp[1].toLowerCase();
   }
@@ -608,9 +579,7 @@ export class AppComponent {
     if (this.validPositionObject(obj) !== true) {
       return false;
     }
-
     var fen = '';
-
     var currentRow = 8;
     for (var i = 0; i < 8; i++) {
       for (var j = 0; j < 8; j++) {
@@ -633,7 +602,6 @@ export class AppComponent {
 
       currentRow--;
     }
-
     fen = fen.replace(/11111111/g, '8');
     fen = fen.replace(/1111111/g, '7');
     fen = fen.replace(/111111/g, '6');
@@ -641,9 +609,9 @@ export class AppComponent {
     fen = fen.replace(/1111/g, '4');
     fen = fen.replace(/111/g, '3');
     fen = fen.replace(/11/g, '2');
-
     return fen;
   }
+
   validFen(fen: any) {
     if (typeof fen !== 'string') {
       return false;
@@ -651,11 +619,9 @@ export class AppComponent {
     // cut off any move, castling, etc info from the end
     // we're only interested in position information
     fen = fen.replace(/ .+$/, '');
-
     // FEN should be 8 sections separated by slashes
     var chunks = fen.split('/');
     if (chunks.length !== 8) return false;
-
     // check the piece sections
     for (var i = 0; i < 8; i++) {
       if (chunks[i] === '' ||
@@ -664,28 +630,24 @@ export class AppComponent {
         return false;
       }
     }
-
     return true;
   }
+
   // convert FEN string to position object
   // returns false if the FEN string is invalid
   fenToObj(fen: any) {
     if (this.validFen(fen) !== true) {
       return false;
     }
-
     // cut off any move, castling, etc info from the end
     // we're only interested in position information
     fen = fen.replace(/ .+$/, '');
-
     var rows = fen.split('/');
     var position: any = {};
-
     var currentRow = 8;
     for (var i = 0; i < 8; i++) {
       var row = rows[i].split('');
       var colIndex = 0;
-
       // loop through each character in the FEN section
       for (var j = 0; j < row.length; j++) {
         // number / empty squares
@@ -699,10 +661,8 @@ export class AppComponent {
           colIndex++;
         }
       }
-
       currentRow--;
     }
-
     return position;
   }
 
@@ -712,7 +672,6 @@ export class AppComponent {
     if (piece.toLowerCase() === piece) {
       return 'b' + piece.toUpperCase();
     }
-
     // white piece
     return 'w' + piece.toUpperCase();
   }
@@ -747,23 +706,18 @@ export class AppComponent {
 
   // calculate an array of animations that need to happen in order to get from pos1 to pos2
   calculateAnimations(oldPosition: any, newPosition: any) {
-
     var pos1 = this.deepCopy(oldPosition);
     var pos2 = this.deepCopy(newPosition);
-
     var animations = [];
     var i;
-
     // remove pieces that are the same in both positions
     for (i in pos2) {
       if (pos2.hasOwnProperty(i) !== true) continue;
-
       if (pos1.hasOwnProperty(i) === true && pos1[i] === pos2[i]) {
         delete pos1[i];
         delete pos2[i];
       }
     }
-
     // find all the "move" animations
     for (i in pos2) {
       if (pos2.hasOwnProperty(i) !== true) continue;
@@ -779,20 +733,16 @@ export class AppComponent {
         delete pos2[i];
       }
     }
-
     // add pieces to pos2
     for (i in pos2) {
       if (pos2.hasOwnProperty(i) !== true) continue;
-
       animations.push({
         type: 'add',
         square: i,
         piece: pos2[i]
       });
-
       delete pos2[i];
     }
-
     // clear pieces from pos1
     for (i in pos1) {
       if (pos1.hasOwnProperty(i) !== true) continue;
@@ -801,12 +751,10 @@ export class AppComponent {
         square: i,
         piece: pos1[i]
       });
-
       delete pos1[i];
     }
     return animations;
   }
-
 
   // Verify that CURRENT_POSITION and PIECE_MESH_IDS are in sync
   checkBoard() {
@@ -834,7 +782,6 @@ export class AppComponent {
       }
     }
   }
-
 
   animatePieceFadeOut(square: any, completeFn: any) {
     if (this.PIECE_MESH_IDS.hasOwnProperty(square)) {
@@ -888,7 +835,6 @@ export class AppComponent {
         }
       }
     }
-
     // Return "spare square" code, e.g. sw1, sb2, sw3 etc.
     if (this.sparePieces) {
       // Return "spare square" code, e.g. sw1, sb2, sw3 etc.
@@ -960,7 +906,6 @@ export class AppComponent {
     }
     this.ANIMATION_HAPPENING = true;
     var numOps = a.length;
-
     let onFinish = () => {
       numOps--;
       if (numOps === 0) {
@@ -1053,37 +998,30 @@ export class AppComponent {
   setWidget() {
     this.widget.position = (position: any, useAnimation: any) => {
       // no arguments, return the current position
-
       // if (arguments.length === 0) {
       //   return this.deepCopy(this.CURRENT_POSITION);
       // }
-
       // get position as FEN
       if (typeof position === 'string' && position.toLowerCase() === 'fen') {
         return this.objToFen(this.CURRENT_POSITION);
       }
-
       // default for useAnimations is true
       if (useAnimation !== false) {
         useAnimation = true;
       }
-
       // start position
       if (typeof position === 'string' && position.toLowerCase() === 'start') {
         position = this.deepCopy(this.START_POSITION);
       }
-
       // convert FEN to position object
       if (this.validFen(position) === true) {
         position = this.fenToObj(position);
       }
-
       // validate position object
       if (this.validPositionObject(position) !== true) {
         this.error(6482, 'Invalid value passed to the position method.', position);
         return;
       }
-
       var doDrawing = () => {
         if (useAnimation) {
           var anims = this.calculateAnimations(this.CURRENT_POSITION, position);
@@ -1094,7 +1032,6 @@ export class AppComponent {
           this.drawPositionInstant();
         }
       };
-
       if (this.checkGeometriesLoaded() && this.ANIMATION_HAPPENING === false) {
         doDrawing(); // normal case
       } else {
@@ -1121,12 +1058,10 @@ export class AppComponent {
     this.widget.fen = () => {
       return this.widget.position('fen', undefined);
     };
-
     // highlight a square from client code
     this.widget.greySquare = (sq: any) => {
       this.USER_HIGHLIGHT_MESHES.push(this.addSquareHighlight(sq, 0x404040));
     };
-
     // move pieces
     this.widget.move = () => {
       // no need to throw an error here; just do nothing
@@ -1148,18 +1083,13 @@ export class AppComponent {
         var tmp = arguments[i].split('-');
         moves[tmp[0]] = tmp[1];
       }
-
       // calculate position from moves
       var newPos = this.calculatePositionFromMoves(this.CURRENT_POSITION, moves);
-
       // update the board
       this.widget.position(newPos, useAnimation);
-
       // return the new position object
       return newPos;
     };
-
-
     // clear all highlights set from client code
     this.widget.removeGreySquares =  () =>{
       while (this.USER_HIGHLIGHT_MESHES?.length > 0) {
@@ -1167,7 +1097,6 @@ export class AppComponent {
       }
       this.USER_HIGHLIGHT_MESHES = [];
     };
-
   }
 
 
@@ -1191,11 +1120,6 @@ export class AppComponent {
     this.renderer.render(this.scene, this.camera);
   }
 
-  // ---------------------------------------------------------------------//
-  //                            BROWSER EVENTS                            //
-  // ---------------------------------------------------------------------//
-
-
 
   pickingRayCaster(mouseX: any, mouseY: any) {
     var vector = new THREE.Vector3((mouseX / this.renderer.domElement.width) * 2 - 1,
@@ -1208,9 +1132,7 @@ export class AppComponent {
 
   // Checks ray collisions with board or pieces
   raycast(mouseX: any, mouseY: any) {
-
     var raycaster: any = this.pickingRayCaster(mouseX, mouseY);
-
     var possibleHits: any = {};
     var meshes = [];
     var count = 0;
@@ -1232,7 +1154,6 @@ export class AppComponent {
       pieceBoundingBox.min.z += pieceMesh.position.z;
       pieceBoundingBox.max.z += pieceMesh.position.z;
       intersection = raycaster.intersectObject(pieceMesh);
-
       if (intersection) {
         possibleHits[sq] = intersection;
         meshes.push(pieceMesh);
@@ -1355,6 +1276,7 @@ export class AppComponent {
       this.highlightSourceSquare(this.DRAG_INFO.source);
     }
   }
+
   updateLocation(raycast: any, mouse_x: any, mouse_y: any) {
     var pos = this.projectOntoPlane(mouse_x, mouse_y, raycast.intersection_point.y);
     if (!pos) {
@@ -1375,6 +1297,7 @@ export class AppComponent {
       this.DESTINATION_SQUARE_HIGHLIGHT_MESH = null;
     }
   }
+
   removeSquareHighlights() {
     this.removeSourceHighlight();
     this.removeDestinationHighlight();
@@ -1405,7 +1328,6 @@ export class AppComponent {
 
   mouseDown(e: any, useTouchObject: any) {
     e.preventDefault();
-
     if (this.stopEvent) {
       return;
     }
@@ -1427,8 +1349,6 @@ export class AppComponent {
       }
     }
   }
-
-
 
   snapbackDraggedPiece() {
     this.removeSquareHighlights();
@@ -1477,7 +1397,6 @@ export class AppComponent {
     var squareMesh = this.scene.getObjectById(this.SQUARE_MESH_IDS[this.DRAG_INFO.location]);
     if (!squareMesh) {
       this.stopDraggedPiece();
-
     }
     this.DRAG_INFO.mesh.position.x = squareMesh.position.x;
     this.DRAG_INFO.mesh.position.z = squareMesh.position.z;
@@ -1504,19 +1423,11 @@ export class AppComponent {
     var action = 'drop';
     if (this.DRAG_INFO.location === 'offboard'
       || this.validSpareSquare(this.DRAG_INFO.location)) {
-      // if (this.cfg.dropOffBoard === 'snapback') {
-      //     action = 'snapback';
-      // }
-      // if (this.cfg.dropOffBoard === 'trash') {
-      //     action = 'trash';
-      // }
       action = 'snapback';
     }
-
     // Call onDrop on event handlers, possibly changing action
     //  if (this.cfg.hasOwnProperty('onDrop') && typeof this.cfg.onDrop === 'function') {
     var newPosition = this.deepCopy(this.CURRENT_POSITION);
-
     // source piece is a spare piece and destination is on the board
     if (this.validSpareSquare(this.DRAG_INFO.source) && this.validOrdinarySquare(this.DRAG_INFO.location)) {
       newPosition[this.DRAG_INFO.location] = this.DRAG_INFO.piece;
@@ -1535,7 +1446,6 @@ export class AppComponent {
     if (result === 'snapback' || result === 'trash') {
       action = result;
     }
-
     if (action === 'snapback') {
       this.snapbackDraggedPiece();
     }
@@ -1549,9 +1459,6 @@ export class AppComponent {
       this.controls.enabled = true;
     }
     this.removeSquareHighlights();
-
-
-
     if (this.cursor === 0) {
       this.engine.postMessage("ucinewgame");
     }
@@ -1584,7 +1491,6 @@ export class AppComponent {
 
   mouseMove(e: any, useTouchObject: any) {
     e.preventDefault();
-
     if (this.stopEvent) {
       return;
     }
@@ -1624,7 +1530,6 @@ export class AppComponent {
 
   mouseUp(e: any) {
     e.preventDefault();
-
     if (this.stopEvent) {
       return;
     }
@@ -1647,14 +1552,11 @@ export class AppComponent {
       square: square,
       verbose: true
     });
-
     // exit if there are no moves available for this square
     if (moves.length === 0) return;
-
     if (this.widget.hasOwnProperty('greySquare') && typeof this.widget.greySquare === 'function') {
       // highlight the square they moused over
       this.widget.greySquare(square);
-
       // highlight the possible squares for this piece
       for (var i = 0; i < moves.length; i++) {
         this.widget.greySquare(moves[i].to);
@@ -1681,7 +1583,6 @@ export class AppComponent {
       to: target,
       promotion: 'queens'
     });
-
     // illegal move
     if (move === null) return 'snapback';
     if (this.cursor === 0) {
