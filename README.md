@@ -29,4 +29,5 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 # Image
 
-<img width="956" alt="chess" src="https://user-images.githubusercontent.com/48177059/209847599-342a39bb-a238-48ad-a1e7-281941d6c19b.png">
+
+<img width="959" alt="chess" src="https://user-images.githubusercontent.com/48177059/209847745-db6c8b76-1130-446a-868f-6d8d1ac29ad5.png">
