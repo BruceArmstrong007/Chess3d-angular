@@ -33,6 +33,7 @@ export class AppComponent {
   renderer: any;
   type = 'classic';
   controls: any;
+  stopEvent = false;
   speed: any = 200;
   SQUARE_MESH_IDS: any = [];
   RENDER_FLAG = true;
@@ -101,27 +102,9 @@ export class AppComponent {
     this.controls.enableZoom = true;
     this.buildBoard();
     this.loadPieces();
-    // this.renderer.domElement.addEventListener( 'mousedown', (e:any)=> {
-    //   this.mouseDown(e, false);
-    // }, true );
-    // this.renderer.domElement.addEventListener( 'mousemove', (e:any) =>{
-    //   this.mouseMove(e, false);
-    // }, true);
-    // this.renderer.domElement.addEventListener( 'mouseup', (e:any) =>{
-    //   this.mouseUp(e);
-    // }, true);
     this.container.nativeElement.addEventListener('mousedown', this.mouseDown.bind(this));
     this.container.nativeElement.addEventListener('mousemove', this.mouseMove.bind(this));
     this.container.nativeElement.addEventListener('mouseup', this.mouseUp.bind(this));
-    // if ('ontouchstart' in document.documentElement) {
-    //     this.renderer.domElement.addEventListener('touchstart', (e:any)=> {
-    //       this.mouseDown(e, true);
-    //     }, true);
-    //     this.renderer.domElement.addEventListener('touchmove', (e:any) =>{
-    //       this.mouseMove(e, true);
-    //     }, true);
-    //     this.renderer.domElement.addEventListener('touchend', this.mouseUp, true);
-    // }
 
     this.container.nativeElement.addEventListener('touchstart', this.mouseDown.bind(this, true));
     this.container.nativeElement.addEventListener('touchmove', this.mouseMove.bind(this, true));
@@ -299,14 +282,11 @@ export class AppComponent {
     this.updateStatus();
     let currentScore: any;
     let msg = "position fen " + this.game.fen();
-    console.log("GUI: " + msg);
     this.engine.postMessage(msg);
     msg = 'go movetime 1000';// + $('#moveTime').val()
-    console.log("GUI: " + msg);
     this.engine.postMessage(msg);
     this.engine.onmessage = (event: any) => {
       var line = event.data;
-      console.log("ENGINE: " + line);
       var best = this.parseBestMove(line);
       if (best) {
         var move = this.game.move(best);
@@ -332,7 +312,6 @@ export class AppComponent {
             score = -score; // convert from engine's score to white's score
           }
           // this.updateScoreGauge(score);
-          console.log('Current Score', score)
           currentScore = score;
         }
       }
@@ -341,7 +320,6 @@ export class AppComponent {
 
   parseBestMove(line: any) {
     var match = line.match(/bestmove\s([a-h][1-8][a-h][1-8])(n|N|b|B|r|R|q|Q)?/);
-    console.log(match, line)
     if (match) {
       var bestMove = match[1];
       var promotion = match[2];
@@ -369,8 +347,10 @@ export class AppComponent {
     var status = '';
 
     var moveColor = 'White';
+    this.stopEvent = false;
     if (this.game.turn() === 'b') {
       moveColor = 'Black';
+      this.stopEvent = true;
     }
 
     if (this.game.game_over()) {
@@ -386,15 +366,6 @@ export class AppComponent {
       } else if (this.game.in_draw()) {
         status = "Game over (fifty move rule)."
       }
-      // swal({
-      //     title : "Game Over",
-      //     text : status,
-      //     type: 'info',
-      //     showCancelButton: false,
-      //     confirmButtonColor: "#DD6655",
-      //     onConfirmButtonText: 'OK',
-      //     closeOnConfirm: true
-      // });
       alert(status);
       this.engineRunning = false;
     }
@@ -423,7 +394,7 @@ export class AppComponent {
       this.entirePGN = currentPGN;
     }
     // pgnEl.html(currentPGN);
-    console.log('currentPGN', currentPGN)
+    // console.log('currentPGN', currentPGN)
     if (this.engineRunning) {
       status += ' Thinking...';
     }
@@ -1462,6 +1433,10 @@ export class AppComponent {
 
   mouseDown(e: any, useTouchObject: any) {
     e.preventDefault();
+
+    if(this.stopEvent){
+      return;
+    }
     if (this.DRAG_INFO) {
       return;
     }
@@ -1608,7 +1583,6 @@ export class AppComponent {
 
 
     if (this.cursor === 0) {
-      console.log("GUI: ucinewgame");
       this.engine.postMessage("ucinewgame");
     }
     this.moveList = this.moveList.slice(0, this.cursor);
@@ -1640,6 +1614,10 @@ export class AppComponent {
 
   mouseMove(e: any, useTouchObject: any) {
     e.preventDefault();
+
+    if(this.stopEvent){
+      return;
+    }
     var coords = this.offset(e, useTouchObject);
     if (this.DRAG_INFO) {
       this.updateDraggedPiece(coords.x, coords.y);
@@ -1682,6 +1660,10 @@ export class AppComponent {
 
   mouseUp(e: any) {
     e.preventDefault();
+
+    if(this.stopEvent){
+      return;
+    }
     if (this.DRAG_INFO) {
       this.stopDraggedPiece();
     }
@@ -1742,7 +1724,6 @@ export class AppComponent {
       // illegal move
       if (move === null) return 'snapback';
       if (this.cursor === 0) {
-          console.log("GUI: ucinewgame");
           this.engine.postMessage("ucinewgame");
       }
       this.moveList =this.moveList.slice(0, this.cursor);
