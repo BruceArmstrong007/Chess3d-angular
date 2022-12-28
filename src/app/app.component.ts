@@ -86,7 +86,7 @@ export class AppComponent {
   ngAfterViewInit() {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
-    this.camera.position.y = 10;
+    this.camera.position.y = 15;
     this.camera.position.z = 25;
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(this.container.nativeElement.offsetWidth, this.container.nativeElement.offsetHeight);
