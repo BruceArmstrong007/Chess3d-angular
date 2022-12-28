@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 
@@ -21,7 +20,7 @@ declare var Chess: any;
 export class AppComponent {
   @ViewChild("cmp") container: any;
   engine: any;
-  game: any;
+  game: any = new Chess();;
   engineRunning = false;
   player = 'w';
   entirePGN = '';
@@ -36,12 +35,12 @@ export class AppComponent {
   stopEvent = false;
   speed: any = 200;
   SQUARE_MESH_IDS: any = [];
-  RENDER_FLAG = true;
   GEOMETRIES: any = [];
   SCALINGS: any = [];
   SQUARE_SIZE = 3;
   textColor = 0x000000;
   LABELS: any = [];
+  sparePieces = true;
   SPARE_POSITION: any = {
     sw1: 'wK', sw2: 'wQ', sw3: 'wR', sw4: 'wB', sw5: 'wN', sw6: 'wP',
     sb1: 'bK', sb2: 'bQ', sb3: 'bR', sb4: 'bB', sb5: 'bN', sb6: 'bP'
@@ -68,7 +67,6 @@ export class AppComponent {
   CURRENT_ORIENTATION = 'white';
 
   constructor() {
-    this.game = new Chess();
     this.WHITE_MATERIAL = new THREE.MeshPhongMaterial({ color: new THREE.Color(this.whitePieceColor) });
     this.BLACK_MATERIAL = new THREE.MeshPhongMaterial({ color: new THREE.Color(this.blackPieceColor) });
     this.START_POSITION = this.fenToObj(this.START_FEN);
@@ -114,7 +112,7 @@ export class AppComponent {
   }
 
   setEngine() {
-    this.engine = new Worker("./../assets/js/lozza/lozza.js");
+    this.engine = new Worker("./../assets/js/lozza/" + environment.lozza);
     this.engine.postMessage("uci");
     this.engine.postMessage("ucinewgame");
   }
@@ -404,14 +402,16 @@ export class AppComponent {
 
 
   drawSparePieces() {
-    for (let sq in this.SPARE_POSITION) {
-      if (!this.SPARE_POSITION.hasOwnProperty(sq)) {
-        continue;
+    if (this.sparePieces) {
+      for (let sq in this.SPARE_POSITION) {
+        if (!this.SPARE_POSITION.hasOwnProperty(sq)) {
+          continue;
+        }
+        var piece = this.SPARE_POSITION[sq];
+        var mesh = this.buildPieceMesh(sq, piece);
+        this.PIECE_MESH_IDS[sq] = mesh.id;
+        this.scene.add(mesh);
       }
-      var piece = this.SPARE_POSITION[sq];
-      var mesh = this.buildPieceMesh(sq, piece);
-      this.PIECE_MESH_IDS[sq] = mesh.id;
-      this.scene.add(mesh);
     }
     this.drawPositionInstant();
   }
@@ -890,36 +890,22 @@ export class AppComponent {
     }
 
     // Return "spare square" code, e.g. sw1, sb2, sw3 etc.
-    var colorcode;
-    if (z_coord >= 4 * this.SQUARE_SIZE && z_coord <= 6 * this.SQUARE_SIZE) {
-      colorcode = 'w';
-    } else if (z_coord <= -4 * this.SQUARE_SIZE && z_coord >= -6 * this.SQUARE_SIZE) {
-      colorcode = 'b';
-    } else {
-      return 'offboard';
+    if (this.sparePieces) {
+      // Return "spare square" code, e.g. sw1, sb2, sw3 etc.
+      var colorcode;
+      if (z_coord >= 4 * this.SQUARE_SIZE && z_coord <= 6 * this.SQUARE_SIZE) {
+        colorcode = 'w';
+      } else if (z_coord <= -4 * this.SQUARE_SIZE && z_coord >= -6 * this.SQUARE_SIZE) {
+        colorcode = 'b';
+      } else {
+        return 'offboard';
+      }
+      var u = Math.round(1 + ((10 - 3 * x_coord / this.SQUARE_SIZE) / 4));
+      if (u >= 1 && u <= 6) {
+        sq = 's' + colorcode + u;
+        return sq;
+      }
     }
-    var u = Math.round(1 + ((10 - 3 * x_coord / this.SQUARE_SIZE) / 4));
-    if (u >= 1 && u <= 6) {
-      sq = 's' + colorcode + u;
-      return sq;
-    }
-
-    // if (this.cfg.sparePieces) {
-    //     // Return "spare square" code, e.g. sw1, sb2, sw3 etc.
-    //     var colorcode;
-    //     if (z_coord >= 4 * this.SQUARE_SIZE && z_coord <= 6 * this.SQUARE_SIZE) {
-    //         colorcode = 'w';
-    //     } else if (z_coord <= -4 * this.SQUARE_SIZE && z_coord >= -6 * this.SQUARE_SIZE) {
-    //         colorcode = 'b';
-    //     } else {
-    //         return 'offboard';
-    //     }
-    //     var u = Math.round(1 + ((10 - 3 * x_coord / this.SQUARE_SIZE) / 4));
-    //     if (u >= 1 && u <= 6) {
-    //         sq = 's' + colorcode + u;
-    //         return sq;
-    //     }
-    // }
     return 'offboard';
   }
 
@@ -984,7 +970,6 @@ export class AppComponent {
         // if (this.cfg.hasOwnProperty('moveEnd') && typeof this.cfg.onMoveEnd === 'function') {
         //     this.cfg.onMoveEnd(this.deepCopy(oldPos),this.deepCopy(newPos));
         // }
-        this.RENDER_FLAG = true;
         this.checkBoard();
         this.ANIMATION_HAPPENING = false;
       }
@@ -1004,28 +989,18 @@ export class AppComponent {
     }
     for (j = 0; j < a.length; j++) {
       if (a[j].type === 'add') {
-        //  /   this.animatePieceFadeIn(a[j].square, a[j].piece, onFinish);
-
-        for (var sp in this.SPARE_POSITION) {
-          if (!this.SPARE_POSITION.hasOwnProperty(sp)) {
-            continue;
+        if (this.sparePieces) {
+          for (var sp in this.SPARE_POSITION) {
+            if (!this.SPARE_POSITION.hasOwnProperty(sp)) {
+              continue;
+            }
+            if (this.SPARE_POSITION[sp] === a[j].piece) {
+              this.animateSquareToSquare(sp, a[j].square, onFinish);
+            }
           }
-          if (this.SPARE_POSITION[sp] === a[j].piece) {
-            this.animateSquareToSquare(sp, a[j].square, onFinish);
-          }
+        } else {
+          this.animatePieceFadeIn(a[j].square, a[j].piece, onFinish);
         }
-        // if (this.cfg.sparePieces === true) {
-        //     for (var sp in this.SPARE_POSITION) {
-        //         if (!this.SPARE_POSITION.hasOwnProperty(sp)) {
-        //             continue;
-        //         }
-        //         if (this.SPARE_POSITION[sp] === a[j].piece) {
-        //           this.animateSquareToSquare(sp, a[j].square, onFinish);
-        //         }
-        //     }
-        // } else {
-        //     this.animatePieceFadeIn(a[j].square, a[j].piece, onFinish);
-        // }
       }
     }
   }
@@ -1117,7 +1092,6 @@ export class AppComponent {
           // instant update
           this.setCurrentPosition(position);
           this.drawPositionInstant();
-          this.RENDER_FLAG = true;
         }
       };
 
@@ -1144,14 +1118,13 @@ export class AppComponent {
       this.widget.position({}, useAnimation);
     };
     // Return FEN string of current position
-    this.widget.fen =  () =>{
-      return this.widget.position('fen',undefined);
+    this.widget.fen = () => {
+      return this.widget.position('fen', undefined);
     };
 
     // highlight a square from client code
     this.widget.greySquare = (sq: any) => {
       this.USER_HIGHLIGHT_MESHES.push(this.addSquareHighlight(sq, 0x404040));
-      this.RENDER_FLAG = true;
     };
 
     // move pieces
@@ -1188,7 +1161,7 @@ export class AppComponent {
 
 
     // clear all highlights set from client code
-    this.widget.removeGreySquares = function () {
+    this.widget.removeGreySquares =  () =>{
       while (this.USER_HIGHLIGHT_MESHES?.length > 0) {
         this.scene.remove(this.USER_HIGHLIGHT_MESHES?.pop());
       }
@@ -1377,7 +1350,6 @@ export class AppComponent {
       this.DRAG_INFO.mesh = this.DRAG_INFO.mesh.clone();
       //  this.DRAG_INFO.mesh.position.y = 0; // lift spare piece onto the board
       this.scene.add(this.DRAG_INFO.mesh);
-      this.RENDER_FLAG = true;
     } else if (this.validOrdinarySquare(this.DRAG_INFO.source)) {
       // dragging an ordinary piece
       this.highlightSourceSquare(this.DRAG_INFO.source);
@@ -1434,7 +1406,7 @@ export class AppComponent {
   mouseDown(e: any, useTouchObject: any) {
     e.preventDefault();
 
-    if(this.stopEvent){
+    if (this.stopEvent) {
       return;
     }
     if (this.DRAG_INFO) {
@@ -1478,7 +1450,6 @@ export class AppComponent {
         //     this.cfg.onSnapbackEnd(piece, source, this.deepCopy(this.CURRENT_POSITION), this.CURRENT_ORIENTATION);
         // }
         this.ANIMATION_HAPPENING = false;
-        this.RENDER_FLAG = true;
       };
       this.startTween((t: any) => {
         this.DRAG_INFO.mesh.position.x = tx_start + t * (tx_target - tx_start);
@@ -1561,9 +1532,9 @@ export class AppComponent {
     }
     var oldPosition = this.deepCopy(this.CURRENT_POSITION);
     var result = this.onDrop(this.DRAG_INFO.source, this.DRAG_INFO.location); //, this.DRAG_INFO.piece, newPosition, oldPosition, this.CURRENT_ORIENTATION
-      if (result === 'snapback' || result === 'trash') {
-          action = result;
-      }
+    if (result === 'snapback' || result === 'trash') {
+      action = result;
+    }
 
     if (action === 'snapback') {
       this.snapbackDraggedPiece();
@@ -1577,7 +1548,6 @@ export class AppComponent {
     if (this.controls) {
       this.controls.enabled = true;
     }
-    this.RENDER_FLAG = true;
     this.removeSquareHighlights();
 
 
@@ -1615,7 +1585,7 @@ export class AppComponent {
   mouseMove(e: any, useTouchObject: any) {
     e.preventDefault();
 
-    if(this.stopEvent){
+    if (this.stopEvent) {
       return;
     }
     var coords = this.offset(e, useTouchObject);
@@ -1623,45 +1593,39 @@ export class AppComponent {
       this.updateDraggedPiece(coords.x, coords.y);
     }
     else {
-        // Support onMouseOutSquare() and mouseOverSquare() callbacks if they exist
-        var callOut, callOver;
-        // if (cfg.hasOwnProperty('onMouseoutSquare') && typeof (cfg.onMouseoutSquare) === 'function') {
-        //     callOut = cfg.onMouseoutSquare;
-        // }
-        // if (cfg.hasOwnProperty('onMouseoverSquare') && typeof (cfg.onMouseoverSquare) === 'function') {
-        //     callOver = cfg.onMouseoverSquare;
-        // }
-        callOut = this.onMouseoutSquare;
-        callOver = this.onMouseoverSquare;
-        if (callOut || callOver) {
-            var currentSquare = this.raycast(coords.x, coords.y).source;
-            var currentPosition = this.deepCopy(this.CURRENT_POSITION);
-            if (currentSquare !== this.MOUSEOVER_SQUARE) {
-                var piece;
-                if (callOut && this.validOrdinarySquare(this.MOUSEOVER_SQUARE)) {
-                    piece = false;
-                    if (currentPosition.hasOwnProperty(this.MOUSEOVER_SQUARE)) {
-                        piece = currentPosition[this.MOUSEOVER_SQUARE];
-                    }
-                    callOut(this.MOUSEOVER_SQUARE, piece); //, currentPosition, this.CURRENT_ORIENTATION
-                }
-                if (callOver && this.validOrdinarySquare(currentSquare)) {
-                    piece = false;
-                    if (currentPosition.hasOwnProperty(currentSquare)) {
-                        piece = currentPosition[currentSquare];
-                    }
-                    callOver(currentSquare); //, piece, currentPosition, this.CURRENT_ORIENTATION
-                }
-                this.MOUSEOVER_SQUARE = currentSquare;
+      // Support onMouseOutSquare() and mouseOverSquare() callbacks if they exist
+      var callOut, callOver;
+      callOut = this.onMouseoutSquare;
+      callOver = this.onMouseoverSquare;
+      if (true) {
+        var currentSquare = this.raycast(coords.x, coords.y).source;
+        var currentPosition = this.deepCopy(this.CURRENT_POSITION);
+        if (currentSquare !== this.MOUSEOVER_SQUARE) {
+          var piece;
+          if ( this.validOrdinarySquare(this.MOUSEOVER_SQUARE)) {
+            piece = false;
+            if (currentPosition.hasOwnProperty(this.MOUSEOVER_SQUARE)) {
+              piece = currentPosition[this.MOUSEOVER_SQUARE];
             }
+            this.onMouseoutSquare(this.MOUSEOVER_SQUARE, piece); //, currentPosition, this.CURRENT_ORIENTATION
+          }
+          if ( this.validOrdinarySquare(currentSquare)) {
+            piece = false;
+            if (currentPosition.hasOwnProperty(currentSquare)) {
+              piece = currentPosition[currentSquare];
+            }
+            this.onMouseoverSquare(currentSquare); //, piece, currentPosition, this.CURRENT_ORIENTATION
+          }
+          this.MOUSEOVER_SQUARE = currentSquare;
         }
+      }
     }
   }
 
   mouseUp(e: any) {
     e.preventDefault();
 
-    if(this.stopEvent){
+    if (this.stopEvent) {
       return;
     }
     if (this.DRAG_INFO) {
@@ -1669,70 +1633,67 @@ export class AppComponent {
     }
   }
 
- // update the board position after the piece snap
-    // for castling, en passant, pawn promotion
-    onSnapEnd(){
-      if (!this.game.game_over() && this.game.turn() !== this.player) {
-        this.fireEngine();
-      }
+  // update the board position after the piece snap
+  // for castling, en passant, pawn promotion
+  onSnapEnd() {
+    if (!this.game.game_over() && this.game.turn() !== this.player) {
+      this.fireEngine();
+    }
   };
 
-  onMouseoverSquare(square:any){
+  onMouseoverSquare (square: any) {
+    // get list of possible moves for this square
+    var moves = this.game.moves({
+      square: square,
+      verbose: true
+    });
 
-    if(!this?.game) return;
-      // get list of possible moves for this square
-      var moves = this.game.move({
-          square: square,
-          verbose: true
-      });
+    // exit if there are no moves available for this square
+    if (moves.length === 0) return;
 
-      // exit if there are no moves available for this square
-      if (moves.length === 0) return;
+    if (this.widget.hasOwnProperty('greySquare') && typeof this.widget.greySquare === 'function') {
+      // highlight the square they moused over
+      this.widget.greySquare(square);
 
-      if (this.widget.hasOwnProperty('greySquare') && typeof this.widget.greySquare === 'function') {
-          // highlight the square they moused over
-          this.widget.greySquare(square);
-
-          // highlight the possible squares for this piece
-          for (var i = 0; i < moves.length; i++) {
-            this.widget.greySquare(moves[i].to);
-          }
+      // highlight the possible squares for this piece
+      for (var i = 0; i < moves.length; i++) {
+        this.widget.greySquare(moves[i].to);
       }
+    }
   };
 
-  onMouseoutSquare = (square:any, piece:any) =>{
-      if (this.widget.hasOwnProperty('removeGreySquares') && typeof this.widget.removeGreySquares === 'function') {
-        this.widget.removeGreySquares();
-      }
+  onMouseoutSquare(square: any, piece: any) {
+    if (this.widget.hasOwnProperty('removeGreySquares') && typeof this.widget.removeGreySquares === 'function') {
+      this.widget.removeGreySquares();
+    }
   };
 
-    // Set up chessboard
-    onDrop(source:any, target:any){
-      if (this.engineRunning) {
-          return 'snapback';
-      }
-      if (this.widget.hasOwnProperty('removeGreySquares') && typeof this.widget.removeGreySquares === 'function') {
-          this.widget.removeGreySquares();
-      }
-      // see if the move is legal
-      var move = this.game.move({
-          from: source,
-          to: target,
-          promotion: 'queens'
-      });
+  onDrop(source: any, target: any) {
+    if (this.engineRunning) {
+      return 'snapback';
+    }
+    if (this.widget.hasOwnProperty('removeGreySquares') && typeof this.widget.removeGreySquares === 'function') {
+      this.widget.removeGreySquares();
+    }
+    // see if the move is legal
+    var move = this.game.move({
+      from: source,
+      to: target,
+      promotion: 'queens'
+    });
 
-      // illegal move
-      if (move === null) return 'snapback';
-      if (this.cursor === 0) {
-          this.engine.postMessage("ucinewgame");
-      }
-      this.moveList =this.moveList.slice(0, this.cursor);
-      this.scoreList = this.scoreList.slice(0, this.cursor);
-      this.moveList.push(move);
-      // User just made a move- add a dummy score for now. We will correct this element once we hear from the engine
-      this.scoreList.push(this.scoreList.length === 0 ? 0 : this.scoreList[this.scoreList.length - 1]);
-      this.cursor = this.moveList.length;
-      return;
+    // illegal move
+    if (move === null) return 'snapback';
+    if (this.cursor === 0) {
+      this.engine.postMessage("ucinewgame");
+    }
+    this.moveList = this.moveList.slice(0, this.cursor);
+    this.scoreList = this.scoreList.slice(0, this.cursor);
+    this.moveList.push(move);
+    // User just made a move- add a dummy score for now. We will correct this element once we hear from the engine
+    this.scoreList.push(this.scoreList.length === 0 ? 0 : this.scoreList[this.scoreList.length - 1]);
+    this.cursor = this.moveList.length;
+    return;
   };
 
 }
