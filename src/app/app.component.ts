@@ -269,7 +269,6 @@ addLabelsToScene() {
           this.LABELS.push(label);
           this.scene.add(label);
       }
-      console.log(font)
   });
 }
 
@@ -288,7 +287,6 @@ drawSparePieces() {
 
 
 drawPositionInstant() {
-  console.log(this.PIECE_MESH_IDS,this.CURRENT_POSITION)
   for (var sq in this.PIECE_MESH_IDS) {
       if (this.PIECE_MESH_IDS.hasOwnProperty(sq) !== true) {
           continue;
@@ -328,7 +326,6 @@ buildPieceMesh(square:any, piece:any) {
   }
 
   var geometry : any, mesh : any;
-  console.log(species,piece)
   geometry = this.GEOMETRIES[species];
 
   mesh = new THREE.Mesh(geometry, material);
@@ -1060,7 +1057,6 @@ animateFrames() {
               pieceBoundingBox.max.x += pieceMesh.position.x;
               pieceBoundingBox.min.z += pieceMesh.position.z;
               pieceBoundingBox.max.z += pieceMesh.position.z;
-              console.log(pieceBoundingBox)
               intersection = raycaster.intersectObject(pieceMesh);
 
               if (intersection) {
@@ -1108,9 +1104,8 @@ animateFrames() {
                   }
               }
           }
-
           // We didn't hit an actual piece mesh. Did we hit anything, like a square, empty or not?
-          var pos = this.projectOntoPlane(mouseX, mouseY, 0);
+          var pos = this.projectOntoPlane(mouseX, mouseY,0);
           if (!pos) {
               return {
                   source : 'offboard',
@@ -1179,7 +1174,7 @@ animateFrames() {
       if (this.validSpareSquare(this.DRAG_INFO.source)) {
           // dragging a spare piece
           this.DRAG_INFO.mesh = this.DRAG_INFO.mesh.clone();
-          this.DRAG_INFO.mesh.position.y = 0; // lift spare piece onto the board
+        //  this.DRAG_INFO.mesh.position.y = 0; // lift spare piece onto the board
           this.scene.add(this.DRAG_INFO.mesh);
           this.RENDER_FLAG = true;
       } else if (this.validOrdinarySquare(this.DRAG_INFO.source)) {
@@ -1304,6 +1299,10 @@ dropDraggedPieceOnSquare() {
   this.removeSquareHighlights();
   var newPosition = this.deepCopy(this.CURRENT_POSITION);
   var squareMesh = this.scene.getObjectById(this.SQUARE_MESH_IDS[this.DRAG_INFO.location]);
+  if(!squareMesh){
+   this.stopDraggedPiece();
+
+  }
   this.DRAG_INFO.mesh.position.x = squareMesh.position.x;
   this.DRAG_INFO.mesh.position.z = squareMesh.position.z;
   if (this.validOrdinarySquare(this.DRAG_INFO.source)) {
@@ -1333,6 +1332,7 @@ dropDraggedPieceOnSquare() {
           // if (this.cfg.dropOffBoard === 'trash') {
           //     action = 'trash';
           // }
+          action = 'snapback';
       }
 
       // Call onDrop on event handlers, possibly changing action
