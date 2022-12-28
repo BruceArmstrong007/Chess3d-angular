@@ -1,3 +1,9 @@
+
+Chess Engine - move Validation ,
+Lozza - Chess AI,
+Chessboard3js
+
+
 # ThreeChess
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.6.
@@ -29,4 +35,5 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 # Image
 
-![image](https://user-images.githubusercontent.com/48177059/209846036-8b78bf66-587b-4357-b6fc-0f72d63b314e.png)
+
+<img width="959" alt="chess" src="https://user-images.githubusercontent.com/48177059/209847745-db6c8b76-1130-446a-868f-6d8d1ac29ad5.png">
