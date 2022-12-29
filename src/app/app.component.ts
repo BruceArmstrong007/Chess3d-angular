@@ -20,7 +20,7 @@ declare var Chess: any;
 export class AppComponent {
   @ViewChild("cmp") container: any;
   engine: any;
-  game: any = new Chess();;
+  game: any = new Chess();
   engineRunning = false;
   player = 'w';
   entirePGN = '';
@@ -93,10 +93,13 @@ export class AppComponent {
     this.container.nativeElement.appendChild(this.renderer.domElement);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
-    this.controls.enablePan = true;
-    this.controls.enableRotate = true;
+    this.controls.enablePan = false;
+    this.controls.enableRotate = false;
     this.controls.minDistance = 12;
     this.controls.maxDistance = 50;
+    this.controls.minPolarAngle = Math.PI / 2 * 0.1;
+    this.controls.maxPolarAngle = Math.PI / 2 * 0.8;
+    this.controls.target.y = -3;
     this.controls.enableZoom = true;
     this.buildBoard();
     this.loadPieces();
@@ -368,13 +371,13 @@ export class AppComponent {
         status += ' ' + moveColor + ' is in check.';
       }
     }
-    var currentPGN = this.game.pgn({ max_width: 10, newline_char: "<br>" });
-    var matches = this.entirePGN.lastIndexOf(currentPGN, 0) === 0;
-    if (matches) {
-      currentPGN += this.entirePGN.substring(currentPGN.length, this.entirePGN.length);
-    } else {
-      this.entirePGN = currentPGN;
-    }
+    this.entirePGN = this.game.pgn({ max_width: 10, newline_char: "," });
+    // var matches = this.entirePGN.lastIndexOf(currentPGN, 0) === 0;
+    // if (matches) {
+    //   currentPGN += this.entirePGN.substring(currentPGN.length, this.entirePGN.length);
+    // } else {
+    //   this.entirePGN = currentPGN;
+    // }
     if (this.engineRunning) {
       status += ' Thinking...';
     }
@@ -1597,5 +1600,16 @@ export class AppComponent {
     this.cursor = this.moveList.length;
     return;
   };
+
+  resetBoard(){
+    this.player = 'w';
+    this.game = new Chess();
+    this.moveList = [];
+    this.scoreList = [];
+    this.cursor = 0;
+    this.widget.start();
+    this.engine.postMessage('ucinewgame');
+    this.entirePGN = '';
+  }
 
 }

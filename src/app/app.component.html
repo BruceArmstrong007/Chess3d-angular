@@ -1,1 +1,11 @@
 <div class="canvasContainer" #cmp></div>
+<div class="pgn">
+  <div class="list">
+    <h5 class="pgnTitle">Moves</h5>
+    <div *ngFor="let instance of entirePGN.split(',')">
+      <div class="pgnMoves">{{instance}}</div>
+    </div>
+  </div>
+  <button class="reset" (click)="resetBoard()">Reset</button>
+</div>
+

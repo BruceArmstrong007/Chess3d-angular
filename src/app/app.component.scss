@@ -3,3 +3,47 @@
   height: 100%;
   background-color: rgb(114, 114, 114);
 }
+
+.pgn{
+  position: absolute;
+  left : 0;
+  top : 0;
+  background-color: transparent;
+  border : 1px solid rgb(0, 0, 0);
+  margin: 5px;
+  padding: 0;
+  width: 100px;
+  min-height: 100px;
+  color: white;
+  overflow-y: auto;
+  max-height: calc(100vh - 5px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pgnTitle{
+  text-align: center;
+  padding: 2px;
+  margin: 0;
+}
+
+.pgnMoves{
+  text-align: left;
+  padding: 2px 2px;
+  margin: 0;
+  font-size: small;
+}
+
+.reset{
+  padding: 5px;
+  margin: 5px;
+  background-color: rgb(6, 188, 88);
+  color: white;
+  border: 1px solid green;
+  border-radius: 2px;
+}
+
+.reset:active, .reset:hover{
+  background-color: rgb(5, 147, 69);
+}
