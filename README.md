@@ -34,6 +34,4 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 
 # Image
-
-
-<img width="959" alt="chess" src="https://user-images.githubusercontent.com/48177059/209847745-db6c8b76-1130-446a-868f-6d8d1ac29ad5.png">
+![image](https://user-images.githubusercontent.com/48177059/209937325-3a3b9a76-27f2-4ebe-b336-2a133a98d560.png)
