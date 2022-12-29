@@ -30,6 +30,22 @@
   align-items: center;
 }
 
+.footer{
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.footerText{
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
 @keyframes body {
   0% {
     background-position: 0 50%;
@@ -65,6 +81,11 @@
   text-align: center;
   padding: 2px;
   margin: 0;
+}
+
+.icon{
+  width: 20px;
+  height: 20px;
 }
 
 .pgnMoves{
