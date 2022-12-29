@@ -1,7 +1,7 @@
 
-Chess Engine - move Validation ,
-Lozza - Chess AI,
-Chessboard3js
+Chess Engine - move Validation |
+Lozza - Chess AI |
+Chessboard3js functions are used 
 
 
 # ThreeChess
