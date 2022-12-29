@@ -1368,7 +1368,7 @@ export class AppComponent {
         this.DRAG_INFO.mesh.position.x = tx_target;
         this.DRAG_INFO.mesh.position.z = tz_target;
         var piece = this.DRAG_INFO.piece, source = this.DRAG_INFO.source;
-        this.DRAG_INFO = null;
+        //this.DRAG_INFO = null;
         // if (this.cfg.hasOwnProperty('onSnapbackEnd') && typeof this.cfg.onSnapbackEnd === 'function') {
         //     this.cfg.onSnapbackEnd(piece, source, this.deepCopy(this.CURRENT_POSITION), this.CURRENT_ORIENTATION);
         // }
