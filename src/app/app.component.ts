@@ -1365,16 +1365,18 @@ export class AppComponent {
       var tx_target = squareMesh.position.x;
       var tz_target = squareMesh.position.z;
       var end = () => {
+        if(!this.DRAG_INFO) return;
         this.DRAG_INFO.mesh.position.x = tx_target;
         this.DRAG_INFO.mesh.position.z = tz_target;
         var piece = this.DRAG_INFO.piece, source = this.DRAG_INFO.source;
-        //this.DRAG_INFO = null;
+        this.DRAG_INFO = null;
         // if (this.cfg.hasOwnProperty('onSnapbackEnd') && typeof this.cfg.onSnapbackEnd === 'function') {
         //     this.cfg.onSnapbackEnd(piece, source, this.deepCopy(this.CURRENT_POSITION), this.CURRENT_ORIENTATION);
         // }
         this.ANIMATION_HAPPENING = false;
       };
       this.startTween((t: any) => {
+        if(!this.DRAG_INFO) return;
         this.DRAG_INFO.mesh.position.x = tx_start + t * (tx_target - tx_start);
         this.DRAG_INFO.mesh.position.z = tz_start + t * (tz_target - tz_start);
       }, end, 100);
@@ -1501,33 +1503,27 @@ export class AppComponent {
     var coords = this.offset(e, useTouchObject);
     if (this.DRAG_INFO) {
       this.updateDraggedPiece(coords.x, coords.y);
-    }
-    else {
+    } else {
       // Support onMouseOutSquare() and mouseOverSquare() callbacks if they exist
-      var callOut, callOver;
-      callOut = this.onMouseoutSquare;
-      callOver = this.onMouseoverSquare;
-      if (true) {
-        var currentSquare = this.raycast(coords.x, coords.y).source;
-        var currentPosition = this.deepCopy(this.CURRENT_POSITION);
-        if (currentSquare !== this.MOUSEOVER_SQUARE) {
-          var piece;
-          if ( this.validOrdinarySquare(this.MOUSEOVER_SQUARE)) {
-            piece = false;
-            if (currentPosition.hasOwnProperty(this.MOUSEOVER_SQUARE)) {
-              piece = currentPosition[this.MOUSEOVER_SQUARE];
-            }
-            this.onMouseoutSquare(this.MOUSEOVER_SQUARE, piece); //, currentPosition, this.CURRENT_ORIENTATION
+      var currentSquare = this.raycast(coords.x, coords.y).source;
+      var currentPosition = this.deepCopy(this.CURRENT_POSITION);
+      if (currentSquare !== this.MOUSEOVER_SQUARE) {
+        var piece;
+        if ( this.validOrdinarySquare(this.MOUSEOVER_SQUARE)) {
+          piece = false;
+          if (currentPosition.hasOwnProperty(this.MOUSEOVER_SQUARE)) {
+            piece = currentPosition[this.MOUSEOVER_SQUARE];
           }
-          if ( this.validOrdinarySquare(currentSquare)) {
-            piece = false;
-            if (currentPosition.hasOwnProperty(currentSquare)) {
-              piece = currentPosition[currentSquare];
-            }
-            this.onMouseoverSquare(currentSquare); //, piece, currentPosition, this.CURRENT_ORIENTATION
-          }
-          this.MOUSEOVER_SQUARE = currentSquare;
+          this.onMouseoutSquare(this.MOUSEOVER_SQUARE, piece); //, currentPosition, this.CURRENT_ORIENTATION
         }
+        if ( this.validOrdinarySquare(currentSquare)) {
+          piece = false;
+          if (currentPosition.hasOwnProperty(currentSquare)) {
+            piece = currentPosition[currentSquare];
+          }
+          this.onMouseoverSquare(currentSquare); //, piece, currentPosition, this.CURRENT_ORIENTATION
+        }
+        this.MOUSEOVER_SQUARE = currentSquare;
       }
     }
   }
