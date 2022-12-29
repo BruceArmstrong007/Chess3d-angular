@@ -1640,7 +1640,6 @@ window['Chess'] = window['Chess'] || function(fen) {
 
   };
 };
-
 /* export Chess object if using node or any other CommonJS compatible
  * environment */
 if (typeof exports !== 'undefined') exports.Chess = Chess;
