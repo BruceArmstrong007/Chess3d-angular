@@ -38,7 +38,7 @@ export class AppComponent {
   GEOMETRIES: any = [];
   SCALINGS: any = [];
   SQUARE_SIZE = 3;
-  textColor = 0x000000;
+  textColor = 0xffffff;
   LABELS: any = [];
   sparePieces = true;
   SPARE_POSITION: any = {
