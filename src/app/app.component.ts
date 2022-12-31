@@ -41,6 +41,7 @@ export class AppComponent {
   textColor = 0xffffff;
   LABELS: any = [];
   sparePieces = true;
+  loaded = 0;
   SPARE_POSITION: any = {
     sw1: 'wK', sw2: 'wQ', sw3: 'wR', sw4: 'wB', sw5: 'wN', sw6: 'wP',
     sb1: 'bK', sb2: 'bQ', sb3: 'bR', sb4: 'bB', sb5: 'bN', sb6: 'bP'
@@ -160,6 +161,7 @@ export class AppComponent {
       },
        (xhr) =>{
         console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        this.loaded = xhr.loaded / xhr.total * 100;
       },
        (error) =>{
         console.log('An error happened');

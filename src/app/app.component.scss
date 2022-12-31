@@ -110,3 +110,15 @@
 .reset:active, .reset:hover{
   background-color: rgb(1, 94, 147);
 }
+
+.loader{
+  position: absolute;
+  z-index: 100;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
